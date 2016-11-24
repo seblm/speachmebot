@@ -32,11 +32,11 @@ public class SpeachMeBot {
 
             session.addMessagePostedListener(new EventsPosted());
 
-            scheduleAtFixedRate(DayOfWeek.FRIDAY, 14, 0, ONE_WEEK_MILLISECONDS, () ->
+            scheduleAtFixedRate(DayOfWeek.FRIDAY, 15, 0, ONE_WEEK_MILLISECONDS, () ->
                     session.getChannels().stream()
                             .filter(channel -> "magicians".equals(channel.getName()))
                             .findFirst()
-                            .ifPresent(magicians -> session.sendMessage(magicians, "pensez à vos CRA les gars"))
+                            .ifPresent(magicians -> session.sendMessage(magicians, "trop tard pour vos CRA les gars ^^"))
             );
 
             while (true) {
