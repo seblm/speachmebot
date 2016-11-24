@@ -15,7 +15,10 @@ public class EventsPosted implements SlackMessagePostedListener {
         }
 
         //Gestion event sur Marion et Rose
-        if ((event.getSender().getUserName().equals("marion") || event.getSender().getUserName().equals("rose")) && event.getChannel().getName().equals("bullshit")) {
+        if ((event.getSender().getUserName().equals("marion")
+                || event.getSender().getUserName().equals("rosette")
+                || event.getSender().getUserName().equals("rose"))
+                && event.getChannel().getName().equals("bullshit")) {
             int arrondi = Double.valueOf(Math.floor(Math.random() * 3)).intValue();
             boolean activeBot = arrondi == 0;
 
