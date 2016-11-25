@@ -2,6 +2,7 @@ package speachmebot;
 
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
+import speachmebot.slack.EventsPosted;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
