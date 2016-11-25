@@ -2,6 +2,7 @@ package speachmebot;
 
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
+import speachmebot.slack.EventsPosted;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -14,7 +15,7 @@ import static java.time.ZoneId.systemDefault;
 
 public class SpeachMeBot {
 
-    public static final int ONE_WEEK_MILLISECONDS = 1000 * 60 * 60 * 24 * 7;
+    private static final int ONE_WEEK_MILLISECONDS = 1000 * 60 * 60 * 24 * 7;
 
     public static void main(String[] args) {
         SlackSession session = SlackSessionFactory.createWebSocketSlackSession(args[0]);
@@ -40,9 +41,13 @@ public class SpeachMeBot {
             );
 
             while (true) {
-                Thread.sleep(Long.MAX_VALUE);
+                try {
+                    Thread.sleep(Long.MAX_VALUE);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
