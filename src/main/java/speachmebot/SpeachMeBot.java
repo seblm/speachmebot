@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import speachmebot.slack.EventsPosted;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
@@ -96,9 +98,7 @@ public class SpeachMeBot {
     }
 
     private static void scheduleAtFixedRate(DayOfWeek dayOfWeek, int hour, int minutes, int period, String taskName, Runnable task) {
-        LocalDateTime now = LocalDateTime.now();
-        int deltaDaysToFriday = (dayOfWeek.getValue() - now.getDayOfWeek().getValue()) % 7;
-        LocalDateTime nextFriday = now.plusDays(deltaDaysToFriday).withHour(hour).withMinute(minutes).withSecond(0).withNano(0);
+        LocalDateTime nextFriday = nextDayOfWeek(Clock.systemDefaultZone(), dayOfWeek).atStartOfDay().withHour(hour).withMinute(minutes);
         LOGGER.info("waiting until {} to run {} and then every {}ms", nextFriday, taskName, period);
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -106,6 +106,15 @@ public class SpeachMeBot {
                 task.run();
             }
         }, Date.from(nextFriday.atZone(systemDefault()).toInstant()), period);
+    }
+
+    static LocalDate nextDayOfWeek(Clock clock, DayOfWeek dayOfWeek) {
+        LocalDate now = LocalDate.now(clock);
+        int deltaDays = dayOfWeek.getValue() - now.getDayOfWeek().getValue();
+        if (deltaDays < 0) {
+            deltaDays += 7;
+        }
+        return now.plusDays(deltaDays);
     }
 
 }
