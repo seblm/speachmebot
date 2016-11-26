@@ -16,7 +16,7 @@ public class SpeachMeBotTest {
     public void should_find_next_wednesday_when_monday() {
         Clock monday = Clock.fixed(Instant.parse("2016-11-21T13:15:30.00Z"), ZoneId.of("UTC"));
 
-        LocalDate nextWednesday = SpeachMeBot.nextDayOfWeek(monday, WEDNESDAY);
+        LocalDate nextWednesday = new SpeachMeBot().nextDayOfWeek(monday, WEDNESDAY);
 
         assertThat(nextWednesday).isEqualTo("2016-11-23");
     }
@@ -25,7 +25,7 @@ public class SpeachMeBotTest {
     public void should_find_next_wednesday_when_friday() {
         Clock friday = Clock.fixed(Instant.parse("2016-11-25T13:15:30.00Z"), ZoneId.of("UTC"));
 
-        LocalDate nextWednesday = SpeachMeBot.nextDayOfWeek(friday, WEDNESDAY);
+        LocalDate nextWednesday = new SpeachMeBot().nextDayOfWeek(friday, WEDNESDAY);
 
         assertThat(nextWednesday).isEqualTo("2016-11-30");
     }
