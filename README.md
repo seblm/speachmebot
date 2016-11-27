@@ -1,5 +1,7 @@
 ## speach.me bot
 
+[![Build Status](https://travis-ci.org/seblm/speachmebot.svg?branch=master)](https://travis-ci.org/seblm/speachmebot)
+
 ### How to run it?
 
     mvn clean package
