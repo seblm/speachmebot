@@ -1,6 +1,8 @@
 package speachmebot.domain.rule;
 
 import com.ullink.slack.simpleslackapi.SlackSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import speachmebot.ScheduledTask;
 
 import java.util.HashMap;
@@ -10,6 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CommandosAssigner implements ScheduledTask {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommandosAssigner.class);
 
     @Override
     public String name() {
@@ -29,11 +33,14 @@ public class CommandosAssigner implements ScheduledTask {
             commandosBySousCommandos.put("frederic", "alexis");
 
             String regex = "commando : @(.+) ; sous-commando : @(.+)";
-            Matcher matcher = Pattern.compile(regex).matcher(commandoChannel.getTopic().replaceAll("\r\n", ""));
+            String topic = commandoChannel.getTopic().replaceAll("\r\n", "");
+            LOGGER.info("sujet : \"{}\"");
+            Matcher matcher = Pattern.compile(regex).matcher(topic);
             if (matcher.matches()) {
                 String ancienSousCommando = matcher.group(2);
                 String nouveauSousCommando = matcher.group(1);
                 String nouveauCommando = commandosBySousCommandos.get(nouveauSousCommando);
+                LOGGER.info("nouveau commando : {} → ancien commando = nouveau sous-commando : {} → ancien sous-commando : {}", nouveauCommando, nouveauSousCommando, ancienSousCommando);
                 session.setChannelTopic(commandoChannel, "commando : @" + nouveauCommando + " ; sous-commando : @" + nouveauSousCommando);
                 session.sendMessageToUser(ancienSousCommando, "salut " + ancienSousCommando + ", j'ai le plaisir de t'annoncer que tu n'es plus sous-commando cette semaine ; reste quand même vigilant aux demandes :)", null);
                 session.sendMessageToUser(nouveauSousCommando, "salut " + nouveauSousCommando + ", tu étais commando la semaine dernière, tu deviens sous-commando cette semaine", null);
