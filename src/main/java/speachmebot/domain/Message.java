@@ -7,7 +7,11 @@ public interface Message {
 
     String channel();
 
+    boolean isDirect();
+
     void reply(String reply);
+
+    boolean reply(String channelName, String message);
 
     Random random();
 

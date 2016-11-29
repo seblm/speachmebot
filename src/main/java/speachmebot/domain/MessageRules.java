@@ -1,6 +1,7 @@
 package speachmebot.domain;
 
 import speachmebot.domain.rule.DoesNothingIfBot;
+import speachmebot.domain.rule.Parrot;
 import speachmebot.domain.rule.ReplyIfQuoted;
 import speachmebot.domain.rule.ShutUp;
 
@@ -18,6 +19,7 @@ public class MessageRules implements Consumer<Message> {
     public MessageRules() {
         rules = asList(
                 new DoesNothingIfBot(),
+                new Parrot(),
                 new ShutUp(),
                 new ReplyIfQuoted()
         );

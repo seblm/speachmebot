@@ -24,9 +24,23 @@ public class MessagesRulesTest {
     }
 
     @Test
+    public void should_send_message() {
+        Message message = mock(Message.class, new ThrowsException(new AssertionError("should not invoke this method")));
+        willReturn(false).given(message).senderIsBot();
+        willReturn(true).given(message).isDirect();
+        willReturn("dis sur <#C1503MPDL|channelName> voici mon message").given(message).content();
+        willReturn(true).given(message).reply(anyString(), anyString());
+
+        new MessageRules().accept(message);
+
+        verify(message).reply("channelName", "voici mon message");
+    }
+
+    @Test
     public void should_shut_up_if_marion_on_bullshit() {
         Message message = mock(Message.class, new ThrowsException(new AssertionError("should not invoke this method")));
         willReturn(false).given(message).senderIsBot();
+        willReturn(false).given(message).isDirect();
         willReturn("marion").given(message).sender();
         willReturn("bullshit").given(message).channel();
         willReturn(mock(Random.class)).given(message).random();
@@ -43,6 +57,7 @@ public class MessagesRulesTest {
     public void should_reply_to_quote() {
         Message message = mock(Message.class, new ThrowsException(new AssertionError("should not invoke this method")));
         willReturn(false).given(message).senderIsBot();
+        willReturn(false).given(message).isDirect();
         willReturn(null).given(message).sender();
         willReturn("some string for <@you> bot").given(message).content();
         willReturn("<@you>").given(message).myself();
