@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import speachmebot.domain.rule.CRANotifier;
 import speachmebot.domain.rule.CommandosAssigner;
+import speachmebot.domain.rule.SvnCommitNotifier;
 import speachmebot.slack.EventsPosted;
 
 import java.io.IOException;
@@ -26,12 +27,12 @@ public class SpeachMeBot {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpeachMeBot.class);
 
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.err.println("need API Token as unique program argument");
+        if (args.length != 5) {
+            System.err.println("usage: <API Token> <svnUrl> <svnUserName> <svnPassword> <sourceViewerUrl>");
             System.exit(1);
         }
 
-        new SpeachMeBot().connect(args[0]);
+        new SpeachMeBot().connect(args[0], args[1], args[2], args[3], args[4]);
     }
 
     private final Timer timer;
@@ -42,7 +43,7 @@ public class SpeachMeBot {
         this.timer = new Timer();
     }
 
-    void connect(String APIToken) {
+    private void connect(String APIToken, String svnUrl, String svnUserName, String svnPassword, String sourceViewerUrl) {
         session = SlackSessionFactory.createWebSocketSlackSession(APIToken);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -60,6 +61,13 @@ public class SpeachMeBot {
 
             scheduleAtFixedRate(DayOfWeek.FRIDAY, 15, 0, ONE_WEEK_MILLISECONDS, new CRANotifier());
             scheduleAtFixedRate(DayOfWeek.MONDAY, 9, 0, ONE_WEEK_MILLISECONDS, new CommandosAssigner());
+            SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier(svnUrl, svnUserName, svnPassword, sourceViewerUrl);
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    svnCommitNotifier.run(session);
+                }
+            }, 0L, 1000 * 60L);
 
             while (true) {
                 try {
