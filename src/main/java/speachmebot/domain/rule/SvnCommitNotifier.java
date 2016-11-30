@@ -2,47 +2,29 @@ package speachmebot.domain.rule;
 
 import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackSession;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import speachmebot.ScheduledTask;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
-import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 
 public class SvnCommitNotifier implements ScheduledTask {
 
-    private final DateFormat dateFormatter = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
-    private final DateFormat timeFormatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
     private final Map<String, String> pseudoBySvnUserName;
     private final String sourceViewerUrl;
-    private final SVNClientManager svnClientManager;
-    private final SVNURL url;
+    private final VersionningControlSystem versionningControlSystem;
 
-    private long currentRevision;
+    private String commitId;
 
-    public SvnCommitNotifier(String url, String userName, String password, String sourceViewerUrl) {
-        try {
-            this.url = SVNURL.parseURIEncoded(url);
-        } catch (SVNException e) {
-            throw new RuntimeException(e);
-        }
+    public SvnCommitNotifier(String sourceViewerUrl, VersionningControlSystem versionningControlSystem) {
+        this.versionningControlSystem = versionningControlSystem;
         this.sourceViewerUrl = sourceViewerUrl;
-        this.svnClientManager = SVNClientManager.newInstance(new DefaultSVNOptions(), userName, password);
         this.pseudoBySvnUserName = new HashMap<>();
         this.pseudoBySvnUserName.put("achappron", "alexis");
         this.pseudoBySvnUserName.put("ccharmet", "mcharmet");
@@ -53,7 +35,7 @@ public class SvnCommitNotifier implements ScheduledTask {
         this.pseudoBySvnUserName.put("slemerdy", "sebastian");
         this.pseudoBySvnUserName.put("snoulet", "sylvain");
 
-        svnLog(SVNRevision.HEAD, null, null, 1L, logEntry -> currentRevision = logEntry.getRevision());
+        this.commitId = versionningControlSystem.getLastCommitId();
     }
 
     @Override
@@ -63,47 +45,26 @@ public class SvnCommitNotifier implements ScheduledTask {
 
     @Override
     public void run(SlackSession session) {
-        svnLog(null, SVNRevision.create(currentRevision), SVNRevision.HEAD, 10L, logEntry -> {
-            if (logEntry.getRevision() == currentRevision) {
-                return;
-            }
-            Optional.ofNullable(session.findChannelByName("magicians")).ifPresent(magicians -> {
-                SlackAttachment slackAttachment = new SlackAttachment();
-                slackAttachment.setAuthorName(Optional.ofNullable(pseudoBySvnUserName.get(logEntry.getAuthor()))
-                        .flatMap(author -> Optional.ofNullable(session.findUserByUserName(author)))
-                        .map(committer -> "<@" + committer.getId() + ">")
-                        .orElse(logEntry.getAuthor()));
-                slackAttachment.setColor("#FC7A25");
-                String[] linesOfMessage = logEntry.getMessage().split("\n");
-                slackAttachment.setTitle("#" + logEntry.getRevision() + " " + linesOfMessage[0]);
-                slackAttachment.setPretext("nouveau commit dans svn" +
-                        " " + (sameDay(logEntry.getDate()) ? "à " + timeFormatter.format(logEntry.getDate()) : "le " + dateFormatter.format(logEntry.getDate())) +
-                        " (" + logEntry.getChangedPaths().size() + " fichiers touchés)");
-                slackAttachment.setTitleLink(sourceViewerUrl + "-" + logEntry.getRevision());
-                String otherLines = stream(copyOfRange(linesOfMessage, 1, linesOfMessage.length)).collect(joining("\n"));
-                if (!otherLines.isEmpty()) {
-                    slackAttachment.setText(otherLines);
-                }
-                session.sendMessage(magicians, "", slackAttachment);
-                currentRevision = logEntry.getRevision();
-            });
+        List<VersionningControlSystem.Commit> lastCommits = versionningControlSystem.getLastCommits(this.commitId);
+        lastCommits.forEach(commit -> Optional.ofNullable(session.findChannelByName("sourcecode")).ifPresent(sourcecode -> {
+            SlackAttachment slackAttachment = new SlackAttachment();
+            slackAttachment.setAuthorName(Optional.ofNullable(pseudoBySvnUserName.get(commit.getAuthor()))
+                    .flatMap(author -> Optional.ofNullable(session.findUserByUserName(author)))
+                    .map(committer -> "<@" + committer.getId() + ">")
+                    .orElse(commit.getAuthor()));
+            slackAttachment.setColor("#FC7A25");
+            String[] linesOfMessage = commit.getMessage().split("\n");
+            slackAttachment.setTitle("#" + commit.getCommitId() + " " + linesOfMessage[0]);
+            slackAttachment.setFallback("#" + commit.getCommitId());
+            slackAttachment.setTitleLink(sourceViewerUrl + "-" + commit.getCommitId());
+            List<String> otherLinesArray = new ArrayList<>(asList(copyOfRange(linesOfMessage, 1, linesOfMessage.length)));
+            otherLinesArray.add("(" + commit.getNumberOfUpdatedFiles() + " fichiers touchés)");
+            slackAttachment.setText(otherLinesArray.stream().collect(joining("\n")));
 
-        });
-    }
+            session.sendMessage(sourcecode, "", slackAttachment);
 
-    private boolean sameDay(Date date) {
-        ZoneId zone = ZoneId.systemDefault();
-        LocalDate from = LocalDate.from(ZonedDateTime.ofInstant(date.toInstant(), zone));
-        LocalDate to = LocalDate.now(zone);
-        return from.isEqual(to);
-    }
-
-    private void svnLog(SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, long limit, ISVNLogEntryHandler isvnLogEntryHandler) {
-        try {
-            svnClientManager.getLogClient().doLog(this.url, new String[0], pegRevision, startRevision, endRevision, true, true, limit, isvnLogEntryHandler);
-        } catch (SVNException e) {
-            throw new RuntimeException(e);
-        }
+            commitId = commit.getCommitId();
+        }));
     }
 
 }

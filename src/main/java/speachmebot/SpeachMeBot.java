@@ -8,6 +8,7 @@ import speachmebot.domain.rule.CRANotifier;
 import speachmebot.domain.rule.CommandosAssigner;
 import speachmebot.domain.rule.SvnCommitNotifier;
 import speachmebot.slack.EventsPosted;
+import speachmebot.svn.Svn;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -61,7 +62,7 @@ public class SpeachMeBot {
 
             scheduleAtFixedRate(DayOfWeek.FRIDAY, 15, 0, ONE_WEEK_MILLISECONDS, new CRANotifier());
             scheduleAtFixedRate(DayOfWeek.MONDAY, 9, 0, ONE_WEEK_MILLISECONDS, new CommandosAssigner());
-            SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier(svnUrl, svnUserName, svnPassword, sourceViewerUrl);
+            SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier(sourceViewerUrl, new Svn(svnUserName, svnPassword, svnUrl));
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
