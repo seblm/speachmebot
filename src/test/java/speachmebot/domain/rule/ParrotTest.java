@@ -39,7 +39,6 @@ public class ParrotTest {
     public void should_not_send_message_to_an_unknown_channel() {
         given(message.isDirect()).willReturn(true);
         given(message.content()).willReturn("dis sur <#C1503MPDL|unknown> salut @pseudo comment ça va ?");
-        given(message.reply("unkown", "salut @pseudo comment ça va ?")).willReturn(false);
         Parrot parrot = new Parrot();
 
         Optional<Message> maybeMessage = parrot.apply(message);
