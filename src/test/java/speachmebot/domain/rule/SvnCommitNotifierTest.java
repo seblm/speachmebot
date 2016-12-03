@@ -67,4 +67,22 @@ public class SvnCommitNotifierTest {
                 .containsExactly("author", "#FC7A25", "#5bcdf67 message", "#5bcdf67", "http://vcs.url/commit-5bcdf67", "more information\n(3 fichiers touchés)");
     }
 
+    @Test
+    public void should_not_display_s_if_there_is_only_one_updated_file() {
+        given(versionningControlSystem.getLastCommitId()).willReturn("cb6d219");
+        given(versionningControlSystem.getLastCommits("cb6d219")).willReturn(singletonList(new VersionningControlSystem.Commit(
+                "",
+                "",
+                "",
+                1
+        )));
+        given(slackSession.findChannelByName("sourcecode")).willReturn(slackChannel);
+        SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier("", versionningControlSystem);
+
+        svnCommitNotifier.run(slackSession);
+
+        verify(slackSession).sendMessage(eq(slackChannel), eq(""), slackAttachment.capture());
+        assertThat(slackAttachment.getValue().getText()).isEqualTo("(1 fichier touché)");
+    }
+
 }

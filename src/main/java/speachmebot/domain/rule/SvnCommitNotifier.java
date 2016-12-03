@@ -54,7 +54,10 @@ public class SvnCommitNotifier implements ScheduledTask {
             slackAttachment.setFallback("#" + commit.getCommitId());
             slackAttachment.setTitleLink(sourceViewerUrl + "-" + commit.getCommitId());
             List<String> otherLinesArray = new ArrayList<>(asList(copyOfRange(linesOfMessage, 1, linesOfMessage.length)));
-            otherLinesArray.add("(" + commit.getNumberOfUpdatedFiles() + " fichiers touchés)");
+            otherLinesArray.add("(" + commit.getNumberOfUpdatedFiles()
+                    + " fichier" + (commit.getNumberOfUpdatedFiles() > 1 ? "s" : "")
+                    + " touché" + (commit.getNumberOfUpdatedFiles() > 1 ? "s" : "")
+                    + ")");
             slackAttachment.setText(otherLinesArray.stream()
                     .filter(line -> !line.isEmpty())
                     .collect(joining("\n")));
