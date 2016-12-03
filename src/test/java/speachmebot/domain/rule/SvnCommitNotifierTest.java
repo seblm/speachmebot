@@ -64,7 +64,7 @@ public class SvnCommitNotifierTest {
         verify(slackSession).sendMessage(eq(slackChannel), eq(""), slackAttachment.capture());
         assertThat(slackAttachment.getValue())
                 .extracting("authorName", "color", "title", "fallback", "titleLink", "text")
-                .containsExactly("author", "#FC7A25", "#5bcdf67 message", "#5bcdf67", "http://vcs.url/commit-5bcdf67", "\nmore information\n(3 fichiers touchés)");
+                .containsExactly("author", "#FC7A25", "#5bcdf67 message", "#5bcdf67", "http://vcs.url/commit-5bcdf67", "more information\n(3 fichiers touchés)");
     }
 
 }

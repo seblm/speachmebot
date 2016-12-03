@@ -4,11 +4,7 @@ import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import speachmebot.ScheduledTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
@@ -59,7 +55,9 @@ public class SvnCommitNotifier implements ScheduledTask {
             slackAttachment.setTitleLink(sourceViewerUrl + "-" + commit.getCommitId());
             List<String> otherLinesArray = new ArrayList<>(asList(copyOfRange(linesOfMessage, 1, linesOfMessage.length)));
             otherLinesArray.add("(" + commit.getNumberOfUpdatedFiles() + " fichiers touchés)");
-            slackAttachment.setText(otherLinesArray.stream().collect(joining("\n")));
+            slackAttachment.setText(otherLinesArray.stream()
+                    .filter(line -> !line.isEmpty())
+                    .collect(joining("\n")));
 
             session.sendMessage(sourcecode, "", slackAttachment);
 
