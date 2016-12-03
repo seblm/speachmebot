@@ -4,7 +4,10 @@ import com.ullink.slack.simpleslackapi.SlackAttachment;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import speachmebot.ScheduledTask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
@@ -12,25 +15,16 @@ import static java.util.stream.Collectors.joining;
 
 public class SvnCommitNotifier implements ScheduledTask {
 
-    private final Map<String, String> pseudoBySvnUserName;
+    private final Map<String, String> pseudoByVcsUserName;
     private final String sourceViewerUrl;
     private final VersionningControlSystem versionningControlSystem;
 
     private String commitId;
 
-    public SvnCommitNotifier(String sourceViewerUrl, VersionningControlSystem versionningControlSystem) {
+    public SvnCommitNotifier(String sourceViewerUrl, VersionningControlSystem versionningControlSystem, Map<String, String> pseudoByVcsUserName) {
         this.versionningControlSystem = versionningControlSystem;
         this.sourceViewerUrl = sourceViewerUrl;
-        this.pseudoBySvnUserName = new HashMap<>();
-        this.pseudoBySvnUserName.put("achappron", "alexis");
-        this.pseudoBySvnUserName.put("ccharmet", "mcharmet");
-        this.pseudoBySvnUserName.put("fdurieux", "florian");
-        this.pseudoBySvnUserName.put("fgloppe", "frederic");
-        this.pseudoBySvnUserName.put("jrouet", "jeremy");
-        this.pseudoBySvnUserName.put("lleroux", "loic");
-        this.pseudoBySvnUserName.put("slemerdy", "sebastian");
-        this.pseudoBySvnUserName.put("snoulet", "sylvain");
-
+        this.pseudoByVcsUserName = pseudoByVcsUserName;
         this.commitId = versionningControlSystem.getLastCommitId();
     }
 
@@ -44,7 +38,7 @@ public class SvnCommitNotifier implements ScheduledTask {
         List<VersionningControlSystem.Commit> lastCommits = versionningControlSystem.getLastCommits(this.commitId);
         lastCommits.forEach(commit -> Optional.ofNullable(session.findChannelByName("sourcecode")).ifPresent(sourcecode -> {
             SlackAttachment slackAttachment = new SlackAttachment();
-            slackAttachment.setAuthorName(Optional.ofNullable(pseudoBySvnUserName.get(commit.getAuthor()))
+            slackAttachment.setAuthorName(Optional.ofNullable(pseudoByVcsUserName.get(commit.getAuthor()))
                     .flatMap(author -> Optional.ofNullable(session.findUserByUserName(author)))
                     .map(committer -> "<@" + committer.getId() + ">")
                     .orElse(commit.getAuthor()));

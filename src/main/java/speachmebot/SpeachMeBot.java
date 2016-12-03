@@ -15,15 +15,14 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static java.time.ZoneId.systemDefault;
 
 public class SpeachMeBot {
 
-    private static final int ONE_WEEK_MILLISECONDS = 1000 * 60 * 60 * 24 * 7;
+    private static final long ONE_MINUTE_MILLISECONDS = 1000 * 60;
+    private static final long ONE_WEEK_MILLISECONDS = ONE_MINUTE_MILLISECONDS * 60 * 24 * 7;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpeachMeBot.class);
 
@@ -62,13 +61,23 @@ public class SpeachMeBot {
 
             scheduleAtFixedRate(DayOfWeek.FRIDAY, 15, 0, ONE_WEEK_MILLISECONDS, new CRANotifier());
             scheduleAtFixedRate(DayOfWeek.MONDAY, 9, 0, ONE_WEEK_MILLISECONDS, new CommandosAssigner());
-            SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier(sourceViewerUrl, new Svn(svnUserName, svnPassword, svnUrl));
+            Map<String, String> pseudoBySvnUserName = new HashMap<>();
+            pseudoBySvnUserName.put("achappron", "alexis");
+            pseudoBySvnUserName.put("ccharmet", "mcharmet");
+            pseudoBySvnUserName.put("fdurieux", "florian");
+            pseudoBySvnUserName.put("fgloppe", "frederic");
+            pseudoBySvnUserName.put("jrouet", "jeremy");
+            pseudoBySvnUserName.put("lleroux", "loic");
+            pseudoBySvnUserName.put("slemerdy", "sebastian");
+            pseudoBySvnUserName.put("snoulet", "sylvain");
+
+            SvnCommitNotifier svnCommitNotifier = new SvnCommitNotifier(sourceViewerUrl, new Svn(svnUserName, svnPassword, svnUrl), pseudoBySvnUserName);
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     svnCommitNotifier.run(session);
                 }
-            }, 0L, 1000 * 60L);
+            }, 0L, ONE_MINUTE_MILLISECONDS);
 
             while (true) {
                 try {
@@ -88,7 +97,7 @@ public class SpeachMeBot {
         }
     }
 
-    private void scheduleAtFixedRate(DayOfWeek dayOfWeek, int hour, int minutes, int period, ScheduledTask task) {
+    private void scheduleAtFixedRate(DayOfWeek dayOfWeek, int hour, int minutes, long period, ScheduledTask task) {
         LocalDateTime nextFriday = nextDayOfWeek(Clock.systemDefaultZone(), dayOfWeek).atStartOfDay().withHour(hour).withMinute(minutes);
         LOGGER.info("waiting until {} to run {} and then every {}ms", nextFriday, task.name(), period);
         timer.scheduleAtFixedRate(new TimerTask() {
