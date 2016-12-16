@@ -25,8 +25,7 @@ public class CommandosAssigner implements ScheduledTask {
         Optional.ofNullable(session.findChannelByName("commando")).ifPresent(commandoChannel -> {
 
             Map<String, String> commandosBySousCommandos = new HashMap<>();
-            commandosBySousCommandos.put("sylvain", "sebastian");
-            commandosBySousCommandos.put("sebastian", "florian");
+            commandosBySousCommandos.put("sylvain", "florian");
             commandosBySousCommandos.put("florian", "mcharmet");
             commandosBySousCommandos.put("mcharmet", "loic");
             commandosBySousCommandos.put("loic", "frederic");
